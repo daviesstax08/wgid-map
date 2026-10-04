@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WGid Spatial Map Engine</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body, #map { width: 100%; height: 100%; overflow: hidden; background: #121212; }
+        .node-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.85);
+            color: #00ffcc;
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-family: sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+    <div id="status" class="node-indicator">GPS Active — Seeking Anchor...</div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. Initialize Map
+        const map = L.map('map', { zoomControl: false }).setView([-12.802, 28.234], 18);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 22,
+            attribution: '©️ OpenStreetMap'
+        }).addTo(map);
+
+        // 2. Dual Anchor Setup & Proximity Threshold
+        const PROXIMITY_THRESHOLD_METERS = 6.0;
+        const indoorAnchor = { lat: -12.8021, lng: 28.2341, name: "Indoor Node Alpha" };
+
+        let currentPos = { lat: -12.8020, lng: 28.2340 };
+        let targetPos = { lat: -12.8020, lng: 28.2340 };
+
+        const marker = L.circleMarker([currentPos.lat, currentPos.lng], {
+            radius: 8,
+            fillColor: "#00ffcc",
+            color: "#ffffff",
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9
+        }).addTo(map);
+
+        // Haversine Distance Calc
+        function getDistanceMeters(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        // 3. 60 FPS LERP Movement Loop
+        function animate() {
+            currentPos.lat += (targetPos.lat - currentPos.lat) * 0.1;
+            currentPos.lng += (targetPos.lng - currentPos.lng) * 0.1;
+            
+            marker.setLatLng([currentPos.lat, currentPos.lng]);
+
+            // Proximity Check
+            const dist = getDistanceMeters(currentPos.lat, currentPos.lng, indoorAnchor.lat, indoorAnchor.lng);
+            const statusEl = document.getElementById('status');
+            
+            if (dist <= PROXIMITY_THRESHOLD_METERS) {
+                statusEl.innerText = ⁠ Triggered: ${indoorAnchor.name} (${dist.toFixed(1)}m) ⁠;
+                statusEl.style.color = "#ffcc00";
+            } else {
+                statusEl.innerText = ⁠ Outdoor Nav — Node dist: ${dist.toFixed(1)}m ⁠;
+                statusEl.style.color = "#00ffcc";
+            }
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Simulate movement target on map tap
+        map.on('click', function(e) {
+            targetPos.lat = e.latlng.lat;
+            targetPos.lng = e.latlng.lng;
+        });
+    </script>
+</body>
+</html>
