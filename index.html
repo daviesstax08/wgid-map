@@ -32,13 +32,13 @@
       esriConfig.apiKey = "AAPTaSDTdxyNSJVBrwcDAuWUU2g..o25WqFzK_1Kw-RN3Nq5zPFgpDUVsYQdjDx7b3n7rz_ApuP9d9jVsVgGHqzObhFJm4emh2NfMmLFRpxWlf4ZckvzGTxvITXn9to0gThlgEiYycp_SiRjc4xMvcbhtv4wVaovLagqCdQWVF_spN6HLDFnxvCgkK7t8qMG6vvAr2IO7AR_rks4P1WN-b_qD-RTrAfnJ2zZj50fXlYkdHlwU7DMp_50RQLRNJ6Sl8t46ddypZiBlPm-NAkXLSA..AT1_Qw6UlLR6";
 
       const map = new Map({
-        basemap: "arcgis/navigation"
+        basemap: "arcgis-navigation" // Native ArcGIS Navigation basemap style
       });
 
       const view = new MapView({
         container: "viewDiv",
         map: map,
-        center: [28.2814, -15.4167], // Default center
+        center: [28.2814, -15.4167],
         zoom: 16
       });
     });
